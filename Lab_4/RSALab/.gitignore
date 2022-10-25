@@ -1,0 +1,7 @@
+/.gradle/
+/.idea/
+/gradle/
+/build/
+/bin/
+keypair.rsa
+message-with-signature.bin
