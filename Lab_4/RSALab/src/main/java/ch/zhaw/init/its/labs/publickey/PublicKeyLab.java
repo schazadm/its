@@ -8,17 +8,27 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class PublicKeyLab {
     private static final String messageFilename = "message-with-signature.bin";
     private static final String keypairFilename = "keypair.rsa";
 
     public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException, BadMessageException {
-        PublicKeyLab lab = new PublicKeyLab();
+        // PublicKeyLab lab = new PublicKeyLab();
 
-        lab.exercise1();
-//		lab.exercise9GenerateSignature(args);
-//		lab.exercise9VerifySignature(args);
+        File f = new File(keypairFilename);
+        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(f))) {
+            RSA rsa = new RSA();
+            rsa.save(os);
+        }
+
+        // lab.exercise1();
+        // lab.exercise3(args);
+        // lab.exercise9GenerateSignature(args);
+        // lab.exercise9VerifySignature(args);
     }
 
     private void exercise9GenerateSignature(String[] args) throws BadMessageException, FileNotFoundException, IOException {
@@ -73,7 +83,38 @@ public class PublicKeyLab {
             int keyLength = findRSAKeyLengthForWorkFactorInBits(wfBits);
             System.out.format("%4d bits work factor: %6d bits RSA exponent\n", wfBits, keyLength);
         }
+    }
 
+    private void exercise3(String[] args) throws IOException, BadMessageException, ClassNotFoundException {
+        if (args.length == 0)
+            throw new IOException("Arguments empty");
+
+        String stringMessage = args[0];
+        // use string bytes to generate the BigInteger
+        BigInteger message = new BigInteger(stringMessage.getBytes(StandardCharsets.UTF_8));
+
+        if (Files.notExists(Path.of(keypairFilename))) {
+            generateKeypairIfNotExists();
+        }
+
+        try (ObjectInputStream key = new ObjectInputStream(new FileInputStream(keypairFilename))) {
+            final RSA rsa = new RSA(key);
+            BigInteger cipher = rsa.encrypt(message);
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("ciphertext"));
+            oos.writeObject(cipher);
+            oos.close();
+
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ciphertext"));
+            BigInteger cipherFromFile = (BigInteger) ois.readObject();
+            BigInteger messageNumber = rsa.decrypt(cipherFromFile);
+            String decryptedMessage = new String(messageNumber.toByteArray(), StandardCharsets.US_ASCII);
+            banner("Exercise 3:");
+            System.out.printf("Cleartext: %s\nCiphertext: %s\nDecrypted Cleartext: %s%n", stringMessage, cipher, decryptedMessage);
+        } catch (FileNotFoundException e) {
+            System.err.println("Can't find keypair file \"" + keypairFilename + "\"");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private void banner(String string) {

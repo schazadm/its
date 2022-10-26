@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.math.BigInteger;
 
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class RSA {
@@ -36,19 +37,29 @@ public class RSA {
      * https://www.geeksforgeeks.org/java-program-to-implement-the-rsa-algorithm/
      */
     public RSA() {
-        long p = nBitPrimeRandom(DEFAULT_P_LENGTH);
-        long q = nBitPrimeRandom(DEFAULT_Q_LENGTH);
-        long z = (p - 1) * (q - 1);
-        n = BigInteger.valueOf(p * q);
+        // FIXME: try again and run tests
+        BigInteger p = BigInteger.probablePrime(DEFAULT_P_LENGTH, new Random());
+        BigInteger q = BigInteger.probablePrime(DEFAULT_Q_LENGTH, new Random());
+
+        BigInteger p_sub_1 = p.subtract(BigInteger.ONE); // (p - 1)
+        BigInteger q_sub_1 = q.subtract(BigInteger.ONE); // (q - 1)
+        BigInteger z = p_sub_1.multiply(q_sub_1); // (p - 1) * (q - 1)
+
+        n = p.multiply(q);
         e = PUBLIC_EXPONENT;
-        for (int i = 0; true; i++) {
-            BigInteger x = BigInteger.valueOf(1 + (i * z));
-            // d is for private key exponent
-            if (x.mod(e).intValue() == 0) {
-                d = x.divide(e);
-                break;
-            }
-        }
+
+        int i = 0;
+        BigInteger tmp;
+        BigInteger x;
+
+        do {
+            tmp = z.multiply(BigInteger.valueOf(i)); // z * i
+            x = tmp.add(BigInteger.ONE); // 1 + (z * i)
+            i++;
+        } while (x.mod(e).equals(BigInteger.ZERO));
+
+        // d is for private key exponent
+        d = x.divide(e);
     }
 
     /**
@@ -167,18 +178,5 @@ public class RSA {
         return this.n.equals(other.n)
                 && this.e.equals(other.e)
                 && (this.d == null && other.d == null || this.d.equals(other.d));
-    }
-
-    /**
-     * Returns a random number between 2**(n-1)+1 and 2**n-1
-     * https://www.geeksforgeeks.org/how-to-generate-large-prime-numbers-for-rsa-algorithm/
-     *
-     * @param n amount of bits
-     * @return random prime number
-     */
-    private long nBitPrimeRandom(int n) {
-        int max = (int) Math.pow(2, n) - 1;
-        int min = (int) Math.pow(2, n - 1) + 1;
-        return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 }
