@@ -7,7 +7,6 @@ import java.io.OptionalDataException;
 import java.math.BigInteger;
 
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class RSA {
     /**
@@ -34,32 +33,16 @@ public class RSA {
      * <p>
      * This constructor generates a random RSA key pair of unknown, but substantial,
      * modulus length. The public exponent is 65537.
-     * https://www.geeksforgeeks.org/java-program-to-implement-the-rsa-algorithm/
+     * https://gist.github.com/jbrown17/05dc17ad15d1c1d739ee
      */
     public RSA() {
         // FIXME: try again and run tests
         BigInteger p = BigInteger.probablePrime(DEFAULT_P_LENGTH, new Random());
         BigInteger q = BigInteger.probablePrime(DEFAULT_Q_LENGTH, new Random());
-
-        BigInteger p_sub_1 = p.subtract(BigInteger.ONE); // (p - 1)
-        BigInteger q_sub_1 = q.subtract(BigInteger.ONE); // (q - 1)
-        BigInteger z = p_sub_1.multiply(q_sub_1); // (p - 1) * (q - 1)
-
+        BigInteger phi = getPhi(p, q);
         n = p.multiply(q);
         e = PUBLIC_EXPONENT;
-
-        int i = 0;
-        BigInteger tmp;
-        BigInteger x;
-
-        do {
-            tmp = z.multiply(BigInteger.valueOf(i)); // z * i
-            x = tmp.add(BigInteger.ONE); // 1 + (z * i)
-            i++;
-        } while (x.mod(e).equals(BigInteger.ZERO));
-
-        // d is for private key exponent
-        d = x.divide(e);
+        d = extEuclid(e, phi)[1];
     }
 
     /**
@@ -178,5 +161,32 @@ public class RSA {
         return this.n.equals(other.n)
                 && this.e.equals(other.e)
                 && (this.d == null && other.d == null || this.d.equals(other.d));
+    }
+
+    /**
+     * Recursive EXTENDED Euclidean algorithm, solves Bezout's identity (ax + by = gcd(a,b))
+     * and finds the multiplicative inverse which is the solution to ax ≡ 1 (mod m)
+     * returns [d, p, q] where d = gcd(a,b) and ap + bq = d
+     */
+    public BigInteger[] extEuclid(BigInteger a, BigInteger b) {
+        if (b.equals(BigInteger.ZERO)) return new BigInteger[]{
+                a, BigInteger.ONE, BigInteger.ZERO
+        }; // { a, 1, 0 }
+        BigInteger[] values = extEuclid(b, a.mod(b));
+        BigInteger d = values[0];
+        BigInteger p = values[2];
+        BigInteger q = values[1].subtract(a.divide(b).multiply(values[2]));
+        return new BigInteger[]{
+                d, p, q
+        };
+    }
+
+    /**
+     * 3. Compute Phi(n) (Euler's quotient function)
+     * Phi(n) = (p-1)(q-1)
+     * BigIntegers are objects and must use methods for algebraic operations
+     */
+    public BigInteger getPhi(BigInteger p, BigInteger q) {
+        return (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
     }
 }

@@ -17,16 +17,10 @@ public class PublicKeyLab {
     private static final String keypairFilename = "keypair.rsa";
 
     public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException, BadMessageException {
-        // PublicKeyLab lab = new PublicKeyLab();
+        PublicKeyLab lab = new PublicKeyLab();
 
-        File f = new File(keypairFilename);
-        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(f))) {
-            RSA rsa = new RSA();
-            rsa.save(os);
-        }
-
-        // lab.exercise1();
-        // lab.exercise3(args);
+//         lab.exercise1();
+        lab.exercise3(args);
         // lab.exercise9GenerateSignature(args);
         // lab.exercise9VerifySignature(args);
     }
@@ -91,7 +85,7 @@ public class PublicKeyLab {
 
         String stringMessage = args[0];
         // use string bytes to generate the BigInteger
-        BigInteger message = new BigInteger(stringMessage.getBytes(StandardCharsets.UTF_8));
+        BigInteger message = new BigInteger(stringMessage.getBytes(StandardCharsets.US_ASCII));
 
         if (Files.notExists(Path.of(keypairFilename))) {
             generateKeypairIfNotExists();
