@@ -36,10 +36,10 @@ public class RSA {
      * https://gist.github.com/jbrown17/05dc17ad15d1c1d739ee
      */
     public RSA() {
-        // FIXME: try again and run tests
         BigInteger p = BigInteger.probablePrime(DEFAULT_P_LENGTH, new Random());
         BigInteger q = BigInteger.probablePrime(DEFAULT_Q_LENGTH, new Random());
-        BigInteger phi = getPhi(p, q);
+        // Phi(n) = (p-1)(q-1)
+        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
         n = p.multiply(q);
         e = PUBLIC_EXPONENT;
         d = extEuclid(e, phi)[1];
@@ -179,14 +179,5 @@ public class RSA {
         return new BigInteger[]{
                 d, p, q
         };
-    }
-
-    /**
-     * 3. Compute Phi(n) (Euler's quotient function)
-     * Phi(n) = (p-1)(q-1)
-     * BigIntegers are objects and must use methods for algebraic operations
-     */
-    public BigInteger getPhi(BigInteger p, BigInteger q) {
-        return (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
     }
 }

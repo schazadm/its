@@ -19,13 +19,16 @@ public class PublicKeyLab {
     public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException, BadMessageException {
         PublicKeyLab lab = new PublicKeyLab();
 
-//         lab.exercise1();
-        lab.exercise3(args);
+        lab.exercise1();
+        // lab.exercise3(args);
         // lab.exercise9GenerateSignature(args);
         // lab.exercise9VerifySignature(args);
     }
 
     private void exercise9GenerateSignature(String[] args) throws BadMessageException, FileNotFoundException, IOException {
+        if (args.length == 0)
+            throw new IOException("Arguments empty");
+
         final String messageString = args[0];
         final BigInteger message = BigIntegerEncoder.encode(messageString);
 
