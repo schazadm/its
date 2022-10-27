@@ -1,5 +1,6 @@
 package ch.zhaw.init.its.labs.publickey;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -73,13 +74,9 @@ public class RSA {
      * @throws BadMessageException then the plain text is too large or too small
      */
     public BigInteger encrypt(BigInteger plain) throws BadMessageException {
-        if (plain.compareTo(n) > 0) {
-            throw new BadMessageException("plaintext too large");
-        }
+        if (plain.compareTo(n) > 0) throw new BadMessageException("plaintext too large");
 
-        if (plain.compareTo(BigInteger.ZERO) <= 0) {
-            throw new BadMessageException("plaintext too small");
-        }
+        if (plain.compareTo(BigInteger.ZERO) <= 0) throw new BadMessageException("plaintext too small");
 
         return plain.modPow(e, n);
     }
@@ -90,18 +87,12 @@ public class RSA {
      * @param cipher the ciphertext to decrypt
      * @return plaintext
      */
-    public BigInteger decrypt(BigInteger cipher) throws BadMessageException {
-        if (d == null) {
-            throw new BadMessageException("don't have private key");
-        }
+    public BigInteger decrypt(BigInteger cipher) throws BadMessageException, OperationNotSupportedException {
+        if (d == null) throw new OperationNotSupportedException("don't have private key");
 
-        if (cipher.compareTo(n) > 0) {
-            throw new BadMessageException("ciphertext too large");
-        }
+        if (cipher.compareTo(n) > 0) throw new BadMessageException("ciphertext too large");
 
-        if (cipher.compareTo(BigInteger.ZERO) <= 0) {
-            throw new BadMessageException("ciphertext too small");
-        }
+        if (cipher.compareTo(BigInteger.ZERO) <= 0) throw new BadMessageException("ciphertext too small");
 
         return cipher.modPow(d, n);
     }
@@ -113,13 +104,9 @@ public class RSA {
      * @throws IOException if saving goes wrong or there is no private key to save
      */
     public void save(ObjectOutputStream os) throws IOException {
+        if (d == null) throw new IOException("don't have private key to save");
         savePublic(os);
-
-        if (d != null) {
-            os.writeObject(d);
-        } else {
-            throw new IOException("don't have private key to save");
-        }
+        os.writeObject(d);
     }
 
     /**
@@ -129,6 +116,7 @@ public class RSA {
      * @throws IOException if saving goes wrong
      */
     public void savePublic(ObjectOutputStream os) throws IOException {
+        if (d == null || n == null) throw new IOException("don't have public key to save");
         os.writeObject(n);
         os.writeObject(e);
     }
@@ -140,8 +128,7 @@ public class RSA {
      * @return the signature for this message
      * @throws BadMessageException if something is wrong with this message or there is no private key
      */
-    public BigInteger sign(BigInteger message) throws BadMessageException {
-        if (d == null) throw new BadMessageException("Private Key is N/A");
+    public BigInteger sign(BigInteger message) throws BadMessageException, OperationNotSupportedException {
         return decrypt(message);
     }
 
@@ -153,7 +140,7 @@ public class RSA {
      * @return true iff the signature was made for this message by this key
      * @throws BadMessageException if something is wrong with this message
      */
-    public boolean verify(BigInteger message, BigInteger signature) throws BadMessageException {
+    public boolean verify(BigInteger message, BigInteger signature) throws BadMessageException, OperationNotSupportedException {
         return encrypt(signature).equals(message);
     }
 
