@@ -22,8 +22,8 @@ public class PublicKeyLab {
         // lab.exercise1();
         // lab.exercise3(args);
         // lab.exercise9GenerateSignature(args);
-        // lab.exercise9VerifySignature(args);
-        lab.exercise11();
+        lab.exercise9VerifySignature(args);
+        // lab.exercise11();
     }
 
     private void exercise1() {
@@ -71,21 +71,21 @@ public class PublicKeyLab {
         if (args.length == 0) throw new IOException("Arguments empty");
 
         final String messageString = args[0];
-        final BigInteger message = BigIntegerEncoder.encode(messageString);
+        final BigInteger encodedMessage = BigIntegerEncoder.encode(messageString);
         generateKeypairIfNotExists();
 
         banner("Exercise 9 (signature generation)");
 
         try {
             RSA rsa = new RSA(new ObjectInputStream(new FileInputStream(keypairFilename)));
-            BigInteger signature = rsa.sign(message);
+            BigInteger signature = rsa.sign(encodedMessage);
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(messageFilename));
-            oos.writeObject(message);
+            oos.writeObject(encodedMessage);
             oos.writeObject(signature);
             oos.close();
 
             String parsedS = signature.toString().replaceAll("(.{50})", "$1\n");
-            String parsedM = message.toString().replaceAll("(.{50})", "$1\n");
+            String parsedM = encodedMessage.toString().replaceAll("(.{50})", "$1\n");
             System.out.printf("Signature: %n%s%n", parsedS);
             System.out.printf("Ciphertext: %s%n", parsedM);
         } catch (ClassNotFoundException e) {
@@ -101,9 +101,9 @@ public class PublicKeyLab {
 
         try (ObjectInputStream key = new ObjectInputStream(new FileInputStream(keypairFilename))) {
             final RSA keypair = new RSA(key);
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(messageFilename));
+            // ObjectInputStream ois = new ObjectInputStream(new FileInputStream(messageFilename));
             // Exercise 10 -> if signature is different
-            // ObjectInputStream ois = new ObjectInputStream(new FileInputStream(messageFilenameDiff));
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(messageFilenameDiff));
             BigInteger message = (BigInteger) ois.readObject();
             BigInteger signature = (BigInteger) ois.readObject();
             ok = keypair.verify(message, signature);
@@ -127,13 +127,15 @@ public class PublicKeyLab {
         }
     }
 
+    /**
+     * (2**m)**3 < 2**1024
+     * 2**(m*3) < 2**1024
+     * m*3 < 1024
+     * m < 1024 / 3
+     */
     private void exercise11() {
         banner("Exercise 11");
         final int[] n_bits = {1024, 2048, 3072, 4096};
-        // (2**m)**3 < 2**1024
-        // 2**(m*3) < 2**1024
-        // m*3 < 1024
-        // m < 1024 / 3
         for (int bits : n_bits) {
             System.out.printf("n: %d [bit] ---> max. m len: %d [bit]%n", bits, bits / 3);
         }
