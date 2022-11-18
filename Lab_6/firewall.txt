@@ -20,7 +20,8 @@ define d6ad = 2001:db8:1:000e::1    # DMZ IPv6 address
 
 flush ruleset
 
-table inet myfilter {
+table inet myfilter 
+{
   chain myinput
   {
     type filter hook input priority 0; policy drop;
@@ -57,4 +58,15 @@ table inet myfilter {
     oifname $difc ip daddr $d4nw tcp dport {ssh} accept;
     iifname $difc ip saddr $d4nw tcp sport {ssh} accept;
   }
+}
+
+table ip mynet
+{
+	chain mysnat
+	{
+		type nat hook postrouting priority 0;
+		
+		# external
+		oifname $eifc ip saddr $i4nw snat $e4ad
+	}
 }
