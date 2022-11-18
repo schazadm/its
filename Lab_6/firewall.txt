@@ -25,7 +25,8 @@ table inet myfilter
   chain myinput
   {
     type filter hook input priority 0; policy drop;
-    #meta nftrace set 1
+    
+	#meta nftrace set 1
 	
 	# internal
     iifname $iifc ip saddr $i4nw icmp type echo-request accept;
@@ -37,7 +38,8 @@ table inet myfilter
   chain myoutput
   {
     type filter hook output priority 0; policy drop;
-    #meta nftrace set 1
+    
+	#meta nftrace set 1
 	
 	#internal
     oifname $iifc ip daddr $i4nw icmp type echo-reply accept;
@@ -50,6 +52,8 @@ table inet myfilter
   {
     type filter hook forward priority 0; policy drop;
 	
+	ct state established,related accept
+	
 	# internal; accept ssh packets; only in; block incoming requests (flags != syn);
 	iifname $iifc ip saddr $i4nw tcp sport {ssh} accept;
 	oifname $iifc ip daddr $i4nw tcp dport {ssh} tcp flags != syn accept;
@@ -57,6 +61,22 @@ table inet myfilter
 	# dmz; accept ssh packets; in and out
     oifname $difc ip daddr $d4nw tcp dport {ssh} accept;
     iifname $difc ip saddr $d4nw tcp sport {ssh} accept;
+	
+	# allow ping from dmz to external
+	iifname $difc oifname $eifc ip saddr $d4nw ip daddr $e4nw icmp type echo-request ct state new accept
+	iifname $difc oifname $eifc ip6 saddr $d6nw ip6 daddr $e6nw icmpv6 type echo-request ct state new accept
+
+	# allow ping from internal to external
+	iifname $iifc oifname $eifc ip saddr $i4nw ip daddr $e4nw icmp type echo-request ct state new accept
+	iifname $iifc oifname $eifc ip6 saddr $i6nw ip6 daddr $e6nw icmpv6 type echo-request ct state new accept
+
+	# allow ssh from external to dmz
+	iifname $eifc oifname $difc ip saddr $e4nw ip daddr $d4nw tcp dport ssh ct state new accept
+	iifname $eifc oifname $difc ip6 saddr $e6nw ip6 daddr $d6nw tcp dport ssh ct state new accept
+
+	# allow ssh from internal to dmz
+	iifname $iifc oifname $difc ip saddr $i4nw ip daddr $d4nw tcp dport ssh ct state new accept
+	iifname $iifc oifname $difc ip6 saddr $i6nw ip6 daddr $d6nw tcp dport ssh ct state new accept
   }
 }
 
